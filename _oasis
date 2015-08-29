@@ -1,6 +1,6 @@
 OASISFormat:  0.4
 OCamlVersion: >= 4.02.3
-Name:         libssh
+Name:         ssh
 Version:      0.1
 Maintainers:  Edgar Aroutiounian
 Homepage:     http://hyegar.com
@@ -13,10 +13,9 @@ Description:
 
 AlphaFeatures: ocamlbuild_more_args
 
-Library libssh
+Library ssh
   Path: src
   BuildTools:ocamlbuild
-  # BuildDepends:podge
   install: true
   CClib: -lssh
   CCOpt: -g -Wextra -Wall -std=c99
@@ -25,11 +24,11 @@ Library libssh
   CSources: libssh_stubs.c
 
 Document api
-  Title: API reference for libssh
+  Title: API reference for ssh
   Type: ocamlbuild (0.4)
   Authors: Edgar Aroutiounian
   BuildTools: ocamldoc, ocamlbuild
   Format: HTML
   Index: index.html
   XOCamlbuildPath: .
-  XOCamlbuildLibraries: libssh
+  XOCamlbuildLibraries: ssh

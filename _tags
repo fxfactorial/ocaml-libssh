@@ -1,0 +1,4 @@
+# OASIS_START
+true: debug
+hygiene: tests
+# OASIS_STOP

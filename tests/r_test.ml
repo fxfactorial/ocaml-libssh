@@ -1,4 +1,8 @@
-#require "libssh"
+#require "ssh"
 
 let () =
-  Ssh.version () |> print_endline
+  print_string "SSH version is: "; Ssh.version () |> print_endline;
+  let a_session = Ssh.init () in
+
+  Ssh.close a_session;
+  print_endline "Test finished"
