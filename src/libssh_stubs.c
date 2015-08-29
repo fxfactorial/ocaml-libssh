@@ -26,26 +26,19 @@ CAMLprim value libssh_ml_version(value unit)
 CAMLprim value libssh_ml_ssh_init(value unit)
 {
   CAMLparam1(unit);
-  CAMLlocal1(raw);
 
   ssh_session sess = ssh_new();
   if (!sess) {
-    printf("couldn't allocate, what\n");
     caml_failwith("Couldn't allocate ssh session");
   }
-  raw = caml_alloc(sizeof(ssh_session), Abstract_tag);
-  raw = (value)sess;
-  CAMLreturn(raw);
+  CAMLreturn((value)sess);
 }
 
 CAMLprim value libssh_ml_ssh_close(value a_session)
 {
   CAMLparam1(a_session);
 
-  ssh_session sess = (ssh_session)Data_custom_val(a_session);
-  /* printf("Casted, loc: %p, %d\n", sess, sess); */
-  // Currently seg faulting....so something is wrong.
-  /* ssh_free(sess); */
-
+  ssh_session sess = (ssh_session)a_session;
+  ssh_free(sess);
   CAMLreturn(Val_unit);
 }
