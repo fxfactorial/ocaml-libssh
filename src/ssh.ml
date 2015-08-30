@@ -30,7 +30,8 @@ module Client = struct
   type options = { host: string;
                    username : string;
                    port : int;
-                   log_level : log_level; }
+                   log_level : log_level;
+                   command : string; }
 
   external connect : options -> ssh_session -> unit = "libssh_ml_ssh_connect"
 
