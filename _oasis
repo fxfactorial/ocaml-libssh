@@ -35,3 +35,14 @@ Document api
   Index: index.html
   XOCamlbuildPath: .
   XOCamlbuildLibraries: ssh
+
+Executable run_test
+  Install:false
+  Path: tests
+  MainIs: r_test.ml
+  BuildDepends:ssh
+  BuildTools:ocamlbuild
+
+Test t
+  Command: $run_test
+  TestTools:run_test

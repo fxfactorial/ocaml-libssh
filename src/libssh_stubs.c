@@ -11,7 +11,7 @@
 #include <caml/alloc.h>
 #include <caml/memory.h>
 #include <caml/fail.h>
-
+// libssh itself
 #include <libssh/libssh.h>
 
 CAMLprim value libssh_ml_version(value unit)
@@ -36,9 +36,12 @@ CAMLprim value libssh_ml_ssh_init(value unit)
 
 CAMLprim value libssh_ml_ssh_close(value a_session)
 {
+  // This needs to be way more comprehensive and check for
+  // way more things, for now let's now use.
   CAMLparam1(a_session);
 
   ssh_session sess = (ssh_session)a_session;
+  ssh_disconnect(sess);
   ssh_free(sess);
   CAMLreturn(Val_unit);
 }
@@ -64,10 +67,11 @@ CAMLprim value libssh_ml_ssh_connect(value opts, value this_ssh_session)
 
 	printf("Level: %d\n", log_level);
 	check_result(ssh_options_set(this_sess, SSH_OPTIONS_HOST, host_name));
-	// Not sure why this seg faults
-	/* check_result(ssh_options_set(this_sess, */
-	/* 			     SSH_OPTIONS_LOG_VERBOSITY, */
-	/* 			     &log_level)); */
+
+	check_result(ssh_options_set(this_sess,
+				     SSH_OPTIONS_LOG_VERBOSITY,
+				     &log_level));
+
 	check_result(ssh_options_set(this_sess,
 				     SSH_OPTIONS_PORT,
 				     &Field(opts, 3)));

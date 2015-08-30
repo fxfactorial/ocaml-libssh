@@ -34,9 +34,10 @@ module Client = struct
 
   external connect : options -> ssh_session -> unit = "libssh_ml_ssh_connect"
 
-  let with_session opts =
+  let with_session f opts =
     let handle = init () in
     connect opts handle;
+    f handle;
     close handle
 
 end

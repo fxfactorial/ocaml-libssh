@@ -43,6 +43,6 @@ configure:
 version := $(shell oasis query version)
 name := $(shell oasis query name)
 
-debug:uninstall build install
-	@echo "Rebuild, reinstalled\n"
-	@utop tests/r_test.ml
+debug:uninstall build install test
+	rm -rf /cores/*
+	@echo "Rebuild, reinstalled, ran test\n"
