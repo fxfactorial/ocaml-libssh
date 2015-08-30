@@ -14,19 +14,15 @@
 // libssh itself
 #include <libssh/libssh.h>
 
-CAMLprim value libssh_ml_version(value unit)
-{
-  CAMLparam1(unit);
-  CAMLlocal1(ml_v_string);
+struct result { int status; char *output; };
 
-  ml_v_string = caml_copy_string(SSH_STRINGIFY(LIBSSH_VERSION));
-  CAMLreturn(ml_v_string);
+CAMLprim value libssh_ml_version(void)
+{
+  return caml_copy_string(SSH_STRINGIFY(LIBSSH_VERSION));
 }
 
-CAMLprim value libssh_ml_ssh_init(value unit)
+CAMLprim value libssh_ml_ssh_init(void)
 {
-  CAMLparam1(unit);
-
   ssh_session sess = ssh_new();
 
   if (!sess) {
@@ -58,16 +54,16 @@ void check_result(int r, ssh_session this_session)
 
 static void verify_server(ssh_session this_sess)
 {
+  // Duh this needs to be better
   switch (ssh_is_server_known(this_sess)) {
   case SSH_SERVER_KNOWN_OK:
-    printf("Known server\n");
     break;
   default:
     printf("Otherwise\n");
   }
 }
 
-static int exec_remote_command(char *this_command, ssh_session session)
+static struct result exec_remote_command(char *this_command, ssh_session session)
 {
   ssh_channel channel;
   int rc;
@@ -75,69 +71,80 @@ static int exec_remote_command(char *this_command, ssh_session session)
   unsigned int nbytes;
   channel = ssh_channel_new(session);
   if (channel == NULL)
-    return SSH_ERROR;
+    return (struct result){SSH_ERROR, NULL};
   rc = ssh_channel_open_session(channel);
   if (rc != SSH_OK) {
     ssh_channel_free(channel);
-    return rc;
+    return (struct result){rc, NULL};
   }
   rc = ssh_channel_request_exec(channel, this_command);
   if (rc != SSH_OK) {
     ssh_channel_close(channel);
     ssh_channel_free(channel);
-    return rc;
+    return (struct result){rc, NULL};
   }
   nbytes = ssh_channel_read(channel, buffer, sizeof(buffer), 0);
   while (nbytes > 0) {
-    if (write(1, buffer, nbytes) != nbytes) {
-      ssh_channel_close(channel);
-      ssh_channel_free(channel);
-      return SSH_ERROR;
-    }
     nbytes = ssh_channel_read(channel, buffer, sizeof(buffer), 0);
   }
 
   if (nbytes < 0) {
     ssh_channel_close(channel);
     ssh_channel_free(channel);
-    return SSH_ERROR;
+    return (struct result){SSH_ERROR, NULL};
   }
   ssh_channel_send_eof(channel);
   ssh_channel_close(channel);
   ssh_channel_free(channel);
-  return SSH_OK;
+  char *output = malloc(strlen(buffer) + 1);
+  strcpy(output, buffer);
+  return (struct result){SSH_OK, output};
 }
 
-CAMLprim value libssh_ml_ssh_connect(value opts, value this_ssh_session)
+CAMLprim value libssh_ml_ssh_exec(value command_val, value sess_val)
 {
-  CAMLparam2(opts, this_ssh_session);
-  CAMLlocal5(hostname_val, username_val, port_val, log_level_val, command_val);
-  CAMLlocal1(auth_val);
+  CAMLparam2(command_val, sess_val);
+  CAMLlocal1(output_val);
 
-  char *hostname, *username, *password, *command;
+  char *command;
+  ssh_session this_sess;
+
+  command = String_val(command_val);
+  this_sess = (ssh_session)sess_val;
+
+  struct result this_result = exec_remote_command(command, this_sess);
+  output_val = caml_copy_string(this_result.output);
+  free(this_result.output);
+  CAMLreturn(output_val);
+}
+
+CAMLprim value libssh_ml_ssh_connect(value opts, value sess_val)
+{
+  CAMLparam2(opts, sess_val);
+  CAMLlocal5(hostname_val, username_val, port_val, log_level_val, auth_val);
+
+  char *hostname, *username, *password;
   int port, log_level, auth;
   ssh_session this_sess;
 
-  this_sess = (ssh_session)this_ssh_session;
+  this_sess = (ssh_session)sess_val;
   hostname_val = Field(opts, 0);
   username_val = Field(opts, 1);
   port_val = Field(opts, 2);
   log_level_val = Field(opts, 3);
-  command_val = Field(opts, 4);
-  auth_val = Field(opts, 5);
+  auth_val = Field(opts, 4);
 
   hostname = String_val(hostname_val);
   username = String_val(username_val);
   port = Int_val(port_val);
   log_level = Int_val(log_level_val);
-  command = String_val(command_val);
   auth = Int_val(auth_val);
 
-  printf("Level: %d, Host_name:%s, username: %s, on Port: %d\n",
-  	 log_level,
-  	 hostname,
-  	 username,
-	 port);
+  /* printf("Level: %d, Host_name:%s, username: %s, on Port: %d\n", */
+  /* 	 log_level, */
+  /* 	 hostname, */
+  /* 	 username, */
+  /* 	 port); */
 
   check_result(ssh_options_set(this_sess,
   			       SSH_OPTIONS_HOST,
@@ -168,6 +175,7 @@ CAMLprim value libssh_ml_ssh_connect(value opts, value this_ssh_session)
     }
     break;
   }
-  check_result(exec_remote_command(command, this_sess), this_sess);
+
   CAMLreturn(Val_unit);
 }
+

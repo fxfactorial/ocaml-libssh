@@ -36,10 +36,12 @@ module Client = struct
                    username : string;
                    port : int;
                    log_level : log_level;
-                   command : string;
                    auth : auth; }
 
+  (** Connect and authenticate a ssh connection *)
   external connect : options -> ssh_session -> unit = "libssh_ml_ssh_connect"
+  (** Execute a remote command, get result *)
+  external exec : command:string -> ssh_session -> string = "libssh_ml_ssh_exec"
 
   let with_session f opts =
     let handle = init () in

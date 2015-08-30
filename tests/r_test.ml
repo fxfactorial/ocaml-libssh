@@ -16,11 +16,10 @@ let () =
                log_level = SSH_LOG_NOLOG;
                port = 22;
                username = "gar";
-               command = "uname -a";
                auth = Auto; }
   in
   connect opts a_session;
-
+  exec "uname -a" a_session |> print_endline;
   Ssh.close a_session;
   print_endline "Test finished"; print_newline ()
 
