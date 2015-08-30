@@ -11,7 +11,6 @@ external init : unit -> ssh_session = "libssh_ml_ssh_init"
 (** Close a ssh_session *)
 external close : ssh_session -> unit = "libssh_ml_ssh_close"
 
-
 (** Client side of ssh *)
 module Client = struct
 
@@ -21,17 +20,24 @@ module Client = struct
     (** Only warnings *)
     | SSH_LOG_WARNING
     (** High level protocol information *)
-    |	SSH_LOG_PROTOCOL
+    | SSH_LOG_PROTOCOL
     (** Lower level protocol infomations, packet level *)
-    |	SSH_LOG_PACKET
+    | SSH_LOG_PACKET
     (** Every function path *)
-    |	SSH_LOG_FUNCTIONS
+    | SSH_LOG_FUNCTIONS
+
+  type auth =
+    (** Authenticate using the Ssh agent, assuming its running *)
+    | Auto
+    (** Type in the password on the command line*)
+    | Interactive
 
   type options = { host: string;
                    username : string;
                    port : int;
                    log_level : log_level;
-                   command : string; }
+                   command : string;
+                   auth : auth; }
 
   external connect : options -> ssh_session -> unit = "libssh_ml_ssh_connect"
 

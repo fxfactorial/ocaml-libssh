@@ -11,15 +11,17 @@ let () =
 let () =
   print_string "SSH version is: "; Ssh.version () |> print_endline;
   let a_session = Ssh.init () in
-
-  let opts = {host = "localhost";
-              log_level = SSH_LOG_FUNCTIONS;
-              port = 22;
-              username = "Edgar"}
+  (* Remote Debian machine *)
+  let opts = { host = "edgar.haus";
+               log_level = SSH_LOG_NOLOG;
+               port = 22;
+               username = "gar";
+               command = "uname -a";
+               auth = Auto; }
   in
   connect opts a_session;
 
-  (* Ssh.close a_session; *)
+  Ssh.close a_session;
   print_endline "Test finished"; print_newline ()
 
 (* let () = *)
