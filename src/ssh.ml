@@ -27,10 +27,10 @@ module Client = struct
     (** Every function path *)
     |	SSH_LOG_FUNCTIONS
 
-  type options = {host: string;
-                  log_level : log_level;
-                  port : int;
-                 }
+  type options = { host: string;
+                   username : string;
+                   port : int;
+                   log_level : log_level; }
 
   external connect : options -> ssh_session -> unit = "libssh_ml_ssh_connect"
 

@@ -12,11 +12,15 @@ let () =
   print_string "SSH version is: "; Ssh.version () |> print_endline;
   let a_session = Ssh.init () in
 
-  let opts = {host = "edgar.haus"; log_level = SSH_LOG_FUNCTIONS; port = 22} in
+  let opts = {host = "localhost";
+              log_level = SSH_LOG_FUNCTIONS;
+              port = 22;
+              username = "Edgar"}
+  in
   connect opts a_session;
 
   (* Ssh.close a_session; *)
-  print_endline "Test finished";print_newline ()
+  print_endline "Test finished"; print_newline ()
 
 (* let () = *)
 (*   let opts = {host = "edgar.haus"; log_level = SSH_LOG_PROTOCOL; port = 22} in *)

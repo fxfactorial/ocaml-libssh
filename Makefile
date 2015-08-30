@@ -46,3 +46,7 @@ name := $(shell oasis query name)
 
 debug:uninstall build install test
 	@echo "Rebuild, reinstalled, ran test\n"
+
+c_ssh:
+	clang -lssh scratch.c -o T
+	./T
