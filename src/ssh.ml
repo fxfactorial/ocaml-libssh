@@ -15,22 +15,15 @@ external close : ssh_session -> unit = "libssh_ml_ssh_close"
 module Client = struct
 
   type log_level =
-    (** No logging at all *)
-    | SSH_LOG_NOLOG
-    (** Only warnings *)
-    | SSH_LOG_WARNING
-    (** High level protocol information *)
-    | SSH_LOG_PROTOCOL
-    (** Lower level protocol infomations, packet level *)
-    | SSH_LOG_PACKET
-    (** Every function path *)
-    | SSH_LOG_FUNCTIONS
+    | SSH_LOG_NOLOG     (** No logging at all *)
+    | SSH_LOG_WARNING   (** Only warnings *)
+    | SSH_LOG_PROTOCOL  (** High level protocol information *)
+    | SSH_LOG_PACKET    (** Lower level protocol infomations, packet level *)
+    | SSH_LOG_FUNCTIONS (** Every function path *)
 
   type auth =
-    (** Authenticate using the Ssh agent, assuming its running *)
-    | Auto
-    (** Type in the password on the command line*)
-    | Interactive
+    | Auto        (** Authenticate using the Ssh agent, assuming its running *)
+    | Interactive (** Type in the password on the command line*)
 
   type options = { host: string;
                    username : string;
@@ -40,7 +33,7 @@ module Client = struct
 
   (** Connect and authenticate a ssh connection *)
   external connect : options -> ssh_session -> unit = "libssh_ml_ssh_connect"
-  (** Execute a remote command, get result *)
+  (** Execute a remote command, get result as a string *)
   external exec : command:string -> ssh_session -> string = "libssh_ml_ssh_exec"
 
   let with_session f opts =
