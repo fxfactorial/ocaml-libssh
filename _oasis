@@ -8,17 +8,20 @@ Synopsis:     Bindings to libssh
 Authors:      Edgar Aroutiounian <edgar.factorial@gmail.com>
 License:      BSD-3-clause
 Plugins:      META (0.4), DevFiles (0.4)
-Description:
-  Bindings to libssh
-
 AlphaFeatures: ocamlbuild_more_args
+
+Description:
+  Bindings to libssh, https://www.libssh.org.
+
+  This library exposes both the Client and Server side
+  implementations of ssh.
 
 Library ssh
   Path: src
   BuildTools:ocamlbuild
   install: true
   CClib: -lssh
-  CCOpt: -g -Wextra -Wall -std=c99
+  CCOpt: -g -Wextra -Wall -std=c11
   Modules: Ssh
   CompiledObject: best
   CSources: libssh_stubs.c
