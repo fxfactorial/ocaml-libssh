@@ -36,13 +36,13 @@ setup.data:
 configure:
 	$(SETUP) -configure $(CONFIGUREFLAGS)
 
-.PHONY: build doc test all install uninstall reinstall clean distclean configure
-
 # OASIS_STOP
+
+.PHONY: build doc test all install uninstall \
+	reinstall clean distclean configure debug
 
 version := $(shell oasis query version)
 name := $(shell oasis query name)
 
 debug:uninstall build install test
-	rm -rf /cores/*
 	@echo "Rebuild, reinstalled, ran test\n"

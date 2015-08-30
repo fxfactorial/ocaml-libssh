@@ -1,14 +1,18 @@
-(* Might need the uri library *)
+(* 1) Might need the uri library
+   2) Make brew do equivalent of opam pin *)
 
 open Ssh.Client
 
-let () = Sys.command "ulimit -c unlimited" |> ignore
+let () =
+  ["ulimit -c unlimited";
+   "rm -rf /cores/*"]
+  |> List.iter (fun c -> Sys.command c |> ignore)
 
 let () =
   print_string "SSH version is: "; Ssh.version () |> print_endline;
   let a_session = Ssh.init () in
 
-  let opts = {host = "localhost"; log_level = SSH_LOG_PROTOCOL; port = 22} in
+  let opts = {host = "edgar.haus"; log_level = SSH_LOG_FUNCTIONS; port = 22} in
   connect opts a_session;
 
   (* Ssh.close a_session; *)

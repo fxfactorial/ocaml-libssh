@@ -76,6 +76,11 @@ CAMLprim value libssh_ml_ssh_connect(value opts, value this_ssh_session)
 				     SSH_OPTIONS_PORT,
 				     &Field(opts, 3)));
 
+	// Can't access these fields :(
+	/* if (!this_sess->socket) { */
+	/*   printf("Has no socket pointer \n"); */
+	/* } */
+	/* ssh_connect(this_sess); */
 	/* check_result(ssh_connect(this_sess)); */
 	CAMLreturn(Val_unit);
 }
