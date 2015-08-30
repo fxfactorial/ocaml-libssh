@@ -41,6 +41,7 @@ Executable run_test
   Path: tests
   MainIs: r_test.ml
   BuildDepends:ssh
+  CompiledObject: best
   BuildTools:ocamlbuild
 
 Test t

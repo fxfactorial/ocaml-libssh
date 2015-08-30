@@ -28,10 +28,11 @@ CAMLprim value libssh_ml_ssh_init(value unit)
   CAMLparam1(unit);
 
   ssh_session sess = ssh_new();
+
   if (!sess) {
     caml_failwith("Couldn't allocate ssh session");
   }
-  CAMLreturn((value)sess);
+  return (value)sess;
 }
 
 CAMLprim value libssh_ml_ssh_close(value a_session)
@@ -46,41 +47,38 @@ CAMLprim value libssh_ml_ssh_close(value a_session)
   CAMLreturn(Val_unit);
 }
 
-void check_result(int r)
+void check_result(int r, ssh_session this_session)
 {
-	if (r != SSH_OK) {
-		caml_failwith("Some error");
-	}
+  if (r != SSH_OK) {
+    caml_failwith(ssh_get_error(this_session));
+  }
 }
 CAMLprim value libssh_ml_ssh_connect(value opts, value this_ssh_session)
 {
-	CAMLparam2(opts, this_ssh_session);
-	CAMLlocal2(host_name_val, log_level_val);
+  CAMLparam2(opts, this_ssh_session);
+  CAMLlocal2(host_name_val, log_level_val);
 
-	ssh_session this_sess = (ssh_session)Data_custom_val(this_ssh_session);
-	host_name_val = Field(opts, 0);
-	char *host_name = String_val(host_name_val);
+  ssh_session this_sess = (ssh_session)this_ssh_session;
+  host_name_val = Field(opts, 0);
+  char *host_name = String_val(host_name_val);
 
-	log_level_val = Field(opts, 1);
+  log_level_val = Field(opts, 1);
 
-	int log_level = Int_val(log_level_val);
+  int log_level = Int_val(log_level_val);
 
-	printf("Level: %d\n", log_level);
-	check_result(ssh_options_set(this_sess, SSH_OPTIONS_HOST, host_name));
+  printf("Level: %d\n", log_level);
+  check_result(ssh_options_set(this_sess, SSH_OPTIONS_HOST, host_name),
+	       this_sess);
 
-	check_result(ssh_options_set(this_sess,
-				     SSH_OPTIONS_LOG_VERBOSITY,
-				     &log_level));
+  check_result(ssh_options_set(this_sess,
+			       SSH_OPTIONS_LOG_VERBOSITY,
+			       &log_level),
+	       this_sess);
 
-	check_result(ssh_options_set(this_sess,
-				     SSH_OPTIONS_PORT,
-				     &Field(opts, 3)));
-
-	// Can't access these fields :(
-	/* if (!this_sess->socket) { */
-	/*   printf("Has no socket pointer \n"); */
-	/* } */
-	/* ssh_connect(this_sess); */
-	/* check_result(ssh_connect(this_sess)); */
-	CAMLreturn(Val_unit);
+  check_result(ssh_options_set(this_sess,
+			       SSH_OPTIONS_PORT,
+			       &Field(opts, 3)),
+	       this_sess);
+  check_result(ssh_connect(this_sess), this_sess);
+  CAMLreturn(Val_unit);
 }
