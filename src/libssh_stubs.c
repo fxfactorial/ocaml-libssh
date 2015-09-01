@@ -11,6 +11,7 @@
 #include <caml/alloc.h>
 #include <caml/memory.h>
 #include <caml/fail.h>
+#include <caml/callback.h>
 // libssh itself
 #include <libssh/libssh.h>
 
@@ -68,7 +69,7 @@ static struct result exec_remote_command(char *this_command, ssh_session session
   ssh_channel channel;
   int rc;
   char buffer[256];
-  unsigned int nbytes;
+  int nbytes;
   channel = ssh_channel_new(session);
   if (channel == NULL)
     return (struct result){SSH_ERROR, NULL};
@@ -140,25 +141,13 @@ CAMLprim value libssh_ml_ssh_connect(value opts, value sess_val)
   log_level = Int_val(log_level_val);
   auth = Int_val(auth_val);
 
-  /* printf("Level: %d, Host_name:%s, username: %s, on Port: %d\n", */
-  /* 	 log_level, */
-  /* 	 hostname, */
-  /* 	 username, */
-  /* 	 port); */
-
-  check_result(ssh_options_set(this_sess,
-  			       SSH_OPTIONS_HOST,
-  			       hostname),
+  check_result(ssh_options_set(this_sess, SSH_OPTIONS_HOST, hostname),
   	       this_sess);
 
-  check_result(ssh_options_set(this_sess,
-  			       SSH_OPTIONS_LOG_VERBOSITY,
-  			       &log_level),
+  check_result(ssh_options_set(this_sess, SSH_OPTIONS_LOG_VERBOSITY, &log_level),
   	       this_sess);
 
-  check_result(ssh_options_set(this_sess,
-  			       SSH_OPTIONS_USER,
-  			       username),
+  check_result(ssh_options_set(this_sess, SSH_OPTIONS_USER, username),
   	       this_sess);
 
   check_result(ssh_connect(this_sess), this_sess);
@@ -173,9 +162,25 @@ CAMLprim value libssh_ml_ssh_connect(value opts, value sess_val)
     if (ssh_userauth_password(this_sess, username, password) != SSH_AUTH_SUCCESS) {
       printf("Error: %s\n", ssh_get_error(this_sess));
     }
-    break;
   }
 
   CAMLreturn(Val_unit);
 }
 
+CAMLprim value libssh_ml_remote_shell(value produce, value consume, value sess_val)
+{
+  CAMLparam2(produce, sess_val);
+  CAMLlocal1(exec_this);
+
+  ssh_session this_sess = (ssh_session)sess_val;
+  exec_this = caml_callback(produce, Val_unit);
+  int len = strlen(String_val(exec_this));
+  char copied[len + 1];
+  int copied_amount = strlcpy(copied, String_val(exec_this), len + 1);
+
+
+  struct result r = exec_remote_command(copied, this_sess);
+
+  caml_callback(consume, caml_copy_string(r.output));
+  CAMLreturn(Val_unit);
+}

@@ -42,6 +42,16 @@ module Client = struct
     f handle;
     close handle
 
+  type producer = unit -> string
+
+  type shell_action =
+    | Command of (producer * ssh_session)
+    | Finished of ssh_session
+
+  let (>>=) r f = match r with
+    | Command (prod, sess) -> f (exec (prod ()) sess, sess)
+    | Finished sess -> close sess; Finished sess
+
 end
 
 (** Server side of ssh *)
