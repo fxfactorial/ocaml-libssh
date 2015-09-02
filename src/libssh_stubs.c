@@ -145,14 +145,18 @@ CAMLprim value libssh_ml_ssh_connect(value opts, value sess_val)
 
   len = caml_string_length(hostname_val);
   hostname = caml_strdup(String_val(hostname_val));
+
   if (strlen(hostname) != len) {
     caml_failwith("Problem copying string from OCaml to C");
   } else len = 0;
+
   username = caml_strdup(String_val(username_val));
   len = caml_string_length(username_val);
+
   if (strlen(username) != len) {
     caml_failwith("Problem copying string from OCaml to C");
   } else len = 0;
+
   port = Int_val(port_val);
   log_level = Int_val(log_level_val);
   auth = Int_val(auth_val);
