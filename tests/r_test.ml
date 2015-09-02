@@ -18,4 +18,7 @@ let () =
                            auth = Auto; })
   in
   Ssh.Client.connect opts a_session;
-  a_session |> Ssh.Client.exec ~command:"uname -a" |> print_endline
+  a_session |> Ssh.Client.exec ~command:"uname -a" |> print_endline;
+  Ssh.Client.scp "scratch.c" "/home/gar/copied_scratch.c" a_session;
+  a_session |> Ssh.Client.exec ~command:"cat scratch.c" |> print_endline;
+  Ssh.close a_session

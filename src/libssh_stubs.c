@@ -202,20 +202,42 @@ CAMLprim value libssh_ml_remote_shell(value produce, value consume, value sess_v
   CAMLreturn(Val_unit);
 }
 
+static ssh_scp prepare(ssh_session sess)
+{
+  ssh_scp scp;
+  int result_code;
+
+  scp = ssh_scp_new(sess, SSH_SCP_WRITE | SSH_SCP_RECURSIVE, ".");
+  if(!scp) {
+    caml_failwith(ssh_get_error(sess));
+  }
+  result_code = ssh_scp_init(scp);
+  check_result(result_code, sess);
+  return scp;
+}
+
 CAMLprim value libssh_ml_ssh_scp(value src_path, value dest_path, value sess)
 {
   size_t len = 0;
   char *s_path, *d_path;
+  ssh_session this_sess;
+
   len = caml_string_length(src_path);
+  s_path = caml_strdup(String_val(src_path));
+
   if (strlen(s_path) != len) {
     caml_failwith("Problem copying string from OCaml to C");
   } else len = 0;
-  s_path = caml_strdup(String_val(src_path));
+
   len = caml_string_length(dest_path);
+  d_path = caml_strdup(String_val(dest_path));
+
   if (strlen(d_path) != len) {
     caml_failwith("Problem copying string from OCaml to C");
   } else len = 0;
-  d_path = caml_strdup(String_val(dest_path));
+
+  this_sess = (ssh_session)sess;
+  ssh_scp this_scp = prepare(this_sess);
 
   return Val_unit;
 }
