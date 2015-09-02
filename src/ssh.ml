@@ -38,7 +38,11 @@ module Client = struct
   external exec : command:string -> ssh_session -> string = "libssh_ml_ssh_exec"
 
 
-  external scp : path:string -> ssh_session -> unit = "libssh_ml_ssh_scp"
+  external scp :
+    src_path:string ->
+    dest_path:string ->
+    ssh_session ->
+    unit = "libssh_ml_ssh_scp"
 
   let with_session f opts =
     let handle = init () in
