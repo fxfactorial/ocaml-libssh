@@ -97,7 +97,7 @@ static struct result exec_remote_command(char *this_command, ssh_session session
   ssh_channel_send_eof(channel);
   ssh_channel_close(channel);
   ssh_channel_free(channel);
-  char *output = malloc(strlen(buffer) + 1);
+  char *output = caml_stat_alloc(strlen(buffer) + 1);
   strcpy(output, buffer);
   return (struct result){SSH_OK, output};
 }
@@ -108,9 +108,14 @@ CAMLprim value libssh_ml_ssh_exec(value command_val, value sess_val)
   CAMLlocal1(output_val);
 
   char *command;
+  unsigned int len;
   ssh_session this_sess;
 
-  command = String_val(command_val);
+  len = caml_string_length(command_val);
+  command = caml_strdup(String_val(command_val));
+  if (strlen(command) != len) {
+    caml_failwith("Problem copying string from OCaml to C");
+  }
   this_sess = (ssh_session)sess_val;
 
   struct result this_result = exec_remote_command(command, this_sess);
@@ -126,6 +131,7 @@ CAMLprim value libssh_ml_ssh_connect(value opts, value sess_val)
 
   char *hostname, *username, *password;
   int port, log_level, auth;
+  unsigned int len;
   ssh_session this_sess;
 
   this_sess = (ssh_session)sess_val;
@@ -135,8 +141,16 @@ CAMLprim value libssh_ml_ssh_connect(value opts, value sess_val)
   log_level_val = Field(opts, 3);
   auth_val = Field(opts, 4);
 
-  hostname = String_val(hostname_val);
-  username = String_val(username_val);
+  len = caml_string_length(hostname_val);
+  hostname = caml_strdup(String_val(hostname_val));
+  if (strlen(hostname) != len) {
+    caml_failwith("Problem copying string from OCaml to C");
+  } else len = 0;
+  username = caml_strdup(String_val(username_val));
+  len = caml_string_length(username_val);
+  if (strlen(username) != len) {
+    caml_failwith("Problem copying string from OCaml to C");
+  } else len = 0;
   port = Int_val(port_val);
   log_level = Int_val(log_level_val);
   auth = Int_val(auth_val);
@@ -152,7 +166,8 @@ CAMLprim value libssh_ml_ssh_connect(value opts, value sess_val)
 
   check_result(ssh_connect(this_sess), this_sess);
   verify_server(this_sess);
-
+  free(hostname);
+  free(username);
   switch (auth) {
   case 0:
     check_result(ssh_userauth_publickey_auto(this_sess, NULL, NULL), this_sess);
@@ -162,6 +177,7 @@ CAMLprim value libssh_ml_ssh_connect(value opts, value sess_val)
     if (ssh_userauth_password(this_sess, username, password) != SSH_AUTH_SUCCESS) {
       printf("Error: %s\n", ssh_get_error(this_sess));
     }
+    free(password);
   }
 
   CAMLreturn(Val_unit);
@@ -174,13 +190,19 @@ CAMLprim value libssh_ml_remote_shell(value produce, value consume, value sess_v
 
   ssh_session this_sess = (ssh_session)sess_val;
   exec_this = caml_callback(produce, Val_unit);
-  int len = strlen(String_val(exec_this));
-  char copied[len + 1];
-  int copied_amount = strlcpy(copied, String_val(exec_this), len + 1);
-
+  unsigned int len = caml_string_length(exec_this);
+  char *copied = caml_strdup(String_val(exec_this));
+  if (strlen(copied) != len) {
+    caml_failwith("Problem copying string from OCaml to C");
+  }
 
   struct result r = exec_remote_command(copied, this_sess);
 
   caml_callback(consume, caml_copy_string(r.output));
   CAMLreturn(Val_unit);
+}
+
+CAMLprim value libssh_ml_ssh_scp(value file_path, value sess)
+{
+  return Val_unit;
 }
