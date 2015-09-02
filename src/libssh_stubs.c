@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/stat.h>
 // OCaml declarations
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
@@ -14,6 +15,7 @@
 #include <caml/callback.h>
 // libssh itself
 #include <libssh/libssh.h>
+#include <libssh/sftp.h>
 
 struct result { int status; char *output; };
 
@@ -185,7 +187,7 @@ CAMLprim value libssh_ml_ssh_connect(value opts, value sess_val)
 
 CAMLprim value libssh_ml_remote_shell(value produce, value consume, value sess_val)
 {
-  CAMLparam2(produce, sess_val);
+  CAMLparam3(produce, consume, sess_val);
   CAMLlocal1(exec_this);
 
   ssh_session this_sess = (ssh_session)sess_val;
@@ -199,6 +201,7 @@ CAMLprim value libssh_ml_remote_shell(value produce, value consume, value sess_v
   struct result r = exec_remote_command(copied, this_sess);
 
   caml_callback(consume, caml_copy_string(r.output));
+  free(copied);
   CAMLreturn(Val_unit);
 }
 
@@ -216,9 +219,13 @@ static ssh_scp prepare(ssh_session sess)
   return scp;
 }
 
-CAMLprim value libssh_ml_ssh_scp(value src_path, value dest_path, value sess)
+CAMLprim value libssh_ml_ssh_scp(value src_path,
+				 value dest_path,
+				 value sess)
 {
+  CAMLparam3(src_path, dest_path, sess);
   size_t len = 0;
+  int result_code = 0;
   char *s_path, *d_path;
   ssh_session this_sess;
 
@@ -238,6 +245,14 @@ CAMLprim value libssh_ml_ssh_scp(value src_path, value dest_path, value sess)
 
   this_sess = (ssh_session)sess;
   ssh_scp this_scp = prepare(this_sess);
+  struct stat file_info;
+  if (stat(s_path, &file_info) != 0) {
+    caml_failwith("Cannot get needed file information for scp");
+  }
 
-  return Val_unit;
+  result_code = ssh_scp_push_file(this_scp,
+				  s_path,
+				  file_info.st_size,
+				  666);
+  CAMLreturn(Val_unit);
 }

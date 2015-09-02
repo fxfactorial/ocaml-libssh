@@ -37,10 +37,9 @@ module Client = struct
   (** Execute a remote command, get result as a string *)
   external exec : command:string -> ssh_session -> string = "libssh_ml_ssh_exec"
 
-
-  external scp :
-    src_path:string ->
-    dest_path:string ->
+  external unsafe_scp :
+    string ->
+    string ->
     ssh_session ->
     unit = "libssh_ml_ssh_scp"
 
@@ -49,6 +48,11 @@ module Client = struct
     connect opts handle;
     f handle;
     close handle
+
+  let scp ~src_path ~dest_path h =
+    if not @@ Sys.file_exists src_path then failwith "This file doesn't exist";
+    unsafe_scp src_path dest_path h;
+    print_endline "copied"
 
 end
 
