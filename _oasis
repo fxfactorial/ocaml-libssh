@@ -23,6 +23,7 @@ Library ssh
   CClib: -lssh
   CCOpt: -g -Wextra -Wall -std=c11
   Modules: Ssh
+  InternalModules: Client, Common, Server
   CompiledObject: best
   CSources: libssh_stubs.c
 
