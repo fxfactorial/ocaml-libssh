@@ -8,10 +8,7 @@ type ssh_session
 val version : unit -> string
 
 (** Create a fresh ssh_session *)
-val init : unit -> ssh_session
-
-(** Close a ssh_session *)
-val close : ssh_session -> unit
+val create : unit -> ssh_session
 
 (** Client side of SSH *)
 module Client : sig
@@ -41,8 +38,6 @@ module Client : sig
 
   (** Execute a remote command, get result as a string *)
   val exec : command:string -> ssh_session -> string
-
-  val with_session : (ssh_session -> 'a) -> options -> unit
 
   val scp : src_path:string -> dest_path:string -> ssh_session -> unit
 

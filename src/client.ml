@@ -29,12 +29,6 @@ module Client = struct
     ssh_session ->
     unit = "libssh_ml_ssh_scp"
 
-  let with_session f opts =
-    let handle = init () in
-    connect opts handle;
-    f handle;
-    close handle
-
   let scp ~src_path ~dest_path h =
     if not @@ Sys.file_exists src_path then failwith "This file doesn't exist";
     unsafe_scp src_path dest_path h;

@@ -13,11 +13,29 @@
 #include <caml/memory.h>
 #include <caml/fail.h>
 #include <caml/callback.h>
+#include <caml/custom.h>
 // libssh itself
 #include <libssh/libssh.h>
 #include <libssh/sftp.h>
 
 struct result { int status; char *output; };
+
+void clean_up_ssh_memory (value a_session)
+{
+  printf("Finished\n");
+  /* ssh_session sess = (ssh_session)a_session; */
+  /* ssh_disconnect(sess); */
+  /* ssh_free(sess); */
+}
+
+static struct custom_operations ssh_custom_ops = {
+  .identifier = "ssh_custom_ops",
+  .finalize = clean_up_ssh_memory,
+  .compare = NULL,
+  .hash = NULL,
+  .serialize = NULL,
+  .deserialize = NULL
+};
 
 CAMLprim value libssh_ml_version(void)
 {
@@ -26,31 +44,32 @@ CAMLprim value libssh_ml_version(void)
 
 CAMLprim value libssh_ml_ssh_init(void)
 {
-  ssh_session sess = ssh_new();
+  CAMLparam0();
+  CAMLlocal1(ssh_ml_handle);
 
-  if (!sess) {
+  ssh_session this_sess = ssh_new();
+
+  if (!this_sess) {
     caml_failwith("Couldn't allocate ssh session");
   }
-  return (value)sess;
+  // Last two values are for garbage collection tweaked, best to leave
+  // as just 0, 1
+  ssh_ml_handle = caml_alloc_custom(&ssh_custom_ops, sizeof(&this_sess), 0, 1);
+  memcpy(Data_custom_val(ssh_ml_handle), this_sess, sizeof(&this_sess));
+  /* ssh_free(this_sess); */
+  /* ssh_ml_handle = (value)Data_custom_val(this_sess); */
+  /* CAMLreturn((value)Data_custom_val(ssh_ml_handle)); */
+  CAMLreturn(ssh_ml_handle);
+  /* CAMLreturn((value)this_sess); */
 }
 
-CAMLprim value libssh_ml_ssh_close(value a_session)
-{
-  // This needs to be way more comprehensive and check for
-  // way more things, for now let's now use.
-  CAMLparam1(a_session);
-
-  ssh_session sess = (ssh_session)a_session;
-  ssh_disconnect(sess);
-  ssh_free(sess);
-  CAMLreturn(Val_unit);
-}
 
 void check_result(int r, ssh_session this_session)
 {
   if (r != SSH_OK) {
     ssh_disconnect(this_session);
     ssh_free(this_session);
+    printf("About to fail hard, error code: %d\n", r);
     caml_failwith(ssh_get_error(this_session));
   }
 }
@@ -118,7 +137,7 @@ CAMLprim value libssh_ml_ssh_exec(value command_val, value sess_val)
   if (strlen(command) != len) {
     caml_failwith("Problem copying string from OCaml to C");
   }
-  this_sess = (ssh_session)sess_val;
+  this_sess = (ssh_session)Data_custom_val(sess_val);
 
   struct result this_result = exec_remote_command(command, this_sess);
   output_val = caml_copy_string(this_result.output);
@@ -136,7 +155,7 @@ CAMLprim value libssh_ml_ssh_connect(value opts, value sess_val)
   size_t len;
   ssh_session this_sess;
 
-  this_sess = (ssh_session)sess_val;
+  this_sess = (ssh_session)Data_custom_val(sess_val);
   hostname_val = Field(opts, 0);
   username_val = Field(opts, 1);
   port_val = Field(opts, 2);
@@ -194,7 +213,7 @@ CAMLprim value libssh_ml_remote_shell(value produce, value consume, value sess_v
   CAMLparam3(produce, consume, sess_val);
   CAMLlocal1(exec_this);
 
-  ssh_session this_sess = (ssh_session)sess_val;
+  ssh_session this_sess = (ssh_session)Data_custom_val(sess_val);
   exec_this = caml_callback(produce, Val_unit);
   size_t len = caml_string_length(exec_this);
   char *copied = caml_strdup(String_val(exec_this));

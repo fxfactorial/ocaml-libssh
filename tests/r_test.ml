@@ -5,11 +5,12 @@
 (*   ["ulimit -c unlimited"; *)
 (*    "rm -rf /cores/*"] *)
 (*   |> List.iter (fun c -> Sys.command c |> ignore) *)
+
 open Ssh.Client
 
 let () =
   print_string "SSH version is: "; Ssh.version () |> print_endline;
-  let a_session = Ssh.init () in
+  let a_session = Ssh.create () in
   (* Remote Debian machine *)
   let opts = Ssh.Client.({ host = "edgar.haus";
                            log_level = SSH_LOG_NOLOG;
@@ -18,7 +19,9 @@ let () =
                            auth = Auto; })
   in
   Ssh.Client.connect opts a_session;
-  a_session |> Ssh.Client.exec ~command:"uname -a" |> print_endline;
-  Ssh.Client.scp "scratch.c" "/home/gar/copied_scratch.c" a_session;
-  a_session |> Ssh.Client.exec ~command:"cat scratch.c" |> print_endline;
-  Ssh.close a_session
+
+  (* a_session |> Ssh.Client.exec ~command:"uname -a" |> print_endline; *)
+  (* Ssh.Client.scp "scratch.c" "/home/gar/copied_scratch.c" a_session; *)
+  (* a_session |> Ssh.Client.exec ~command:"cat scratch.c" |> print_endline *)
+
+  ()
