@@ -17,6 +17,8 @@
 #include <libssh/libssh.h>
 #include <libssh/sftp.h>
 
+#define BUFFERSIZE 256
+
 struct result { int status; char *output; };
 
 CAMLprim value libssh_ml_version(void)
@@ -70,8 +72,12 @@ static struct result exec_remote_command(char *this_command, ssh_session session
 {
   ssh_channel channel;
   int rc;
-  char buffer[256];
+  char buffer[BUFFERSIZE];
+  char *output;
   int nbytes;
+  int nread = 0;
+  int outputsize;
+
   channel = ssh_channel_new(session);
   if (channel == NULL)
     return (struct result){SSH_ERROR, NULL};
@@ -86,21 +92,29 @@ static struct result exec_remote_command(char *this_command, ssh_session session
     ssh_channel_free(channel);
     return (struct result){rc, NULL};
   }
-  nbytes = ssh_channel_read(channel, buffer, sizeof(buffer), 0);
-  while (nbytes > 0) {
-    nbytes = ssh_channel_read(channel, buffer, sizeof(buffer), 0);
+  output = caml_stat_alloc(BUFFERSIZE);
+  outputsize = BUFFERSIZE;
+  while ((nbytes = ssh_channel_read(channel, buffer, BUFFERSIZE, 0)) > 0) {
+    if ((nread + nbytes) > outputsize) {
+      output = caml_stat_resize(output, outputsize + BUFFERSIZE);
+      outputsize += BUFFERSIZE;
+    }
+    strncpy((output + nread), buffer, nbytes);
+    nread += nbytes;
   }
-
   if (nbytes < 0) {
+    caml_stat_free(output);
     ssh_channel_close(channel);
     ssh_channel_free(channel);
     return (struct result){SSH_ERROR, NULL};
   }
+
   ssh_channel_send_eof(channel);
   ssh_channel_close(channel);
   ssh_channel_free(channel);
-  char *output = caml_stat_alloc(strlen(buffer) + 1);
-  strcpy(output, buffer);
+
+  output = caml_stat_resize(output, nread + 1);
+  output[nread] = '\0';
   return (struct result){SSH_OK, output};
 }
 
