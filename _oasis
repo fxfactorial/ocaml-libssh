@@ -1,6 +1,6 @@
 OASISFormat:  0.4
 OCamlVersion: >= 4.02.3
-Name:         ssh
+Name:         libssh
 Version:      0.1
 Maintainers:  Edgar Aroutiounian
 Homepage:     http://hyegar.com

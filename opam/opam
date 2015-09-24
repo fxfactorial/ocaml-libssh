@@ -1,5 +1,5 @@
 opam-version: "1.2"
-name: "ssh"
+name: "libssh"
 version: "0.1"
 maintainer: "Edgar Aroutiounian <edgar.factorial@gmail.com>"
 authors: [ "Edgar Aroutiounian <edgar.factorial@gmail.com>" ]
@@ -24,6 +24,9 @@ build-test: [
   ["ocaml" "setup.ml" "-test"]
 ]
 depexts: [
+  [ ["debian"] [ "libssh-dev"] ]   
+  [ ["ubuntu"] [ "libssh-dev" ] ]
+  [ ["centos"] ["libssh-devel"] ]
   [ ["osx" "homebrew"] ["libssh"] ]
 ]
 build-doc: [ "ocaml" "setup.ml" "-doc" ]
