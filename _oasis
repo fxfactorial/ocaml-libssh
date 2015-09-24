@@ -21,7 +21,7 @@ Library ssh
   BuildTools:ocamlbuild
   install: true
   CClib: -lssh
-  CCOpt: -g -Wextra -Wall -std=c11
+  CCOpt: -g -Wextra -Wall
   Modules: Ssh
   InternalModules: Client, Common, Server
   CompiledObject: best
