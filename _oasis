@@ -1,6 +1,6 @@
 OASISFormat:  0.4
 OCamlVersion: >= 4.02.3
-Name:         ssh
+Name:         libssh
 Version:      0.1
 Maintainers:  Edgar Aroutiounian
 Homepage:     http://hyegar.com
@@ -20,8 +20,8 @@ Library ssh
   Path: src
   BuildTools:ocamlbuild
   install: true
-  CClib: -lssh
-  CCOpt: -g -Wextra -Wall -std=c11
+  CClib: -L/usr/local/lib -lssh
+  CCOpt: -g -Wextra -Wall -I/usr/local/include
   Modules: Ssh
   InternalModules: Client, Common, Server
   CompiledObject: best

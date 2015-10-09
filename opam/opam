@@ -1,5 +1,5 @@
 opam-version: "1.2"
-name: "ssh"
+name: "libssh"
 version: "0.1"
 maintainer: "Edgar Aroutiounian <edgar.factorial@gmail.com>"
 authors: [ "Edgar Aroutiounian <edgar.factorial@gmail.com>" ]
@@ -23,9 +23,18 @@ build-test: [
   ["ocaml" "setup.ml" "-build"]
   ["ocaml" "setup.ml" "-test"]
 ]
+depexts: [
+  [ ["debian"] [ "libssh-dev"] ]   
+  [ ["ubuntu"] [ "libssh-dev" ] ]
+  [ ["centos"] ["libssh-devel"] ]
+  [ ["osx" "homebrew"] ["libssh"] ]
+]
 build-doc: [ "ocaml" "setup.ml" "-doc" ]
 depends: [
   "oasis" {build & >= "0.4"}
   "ocamlfind" {build}
 ]
 available: [ ocaml-version >= "4.02.3" ]
+post-messages: [
+  "This package requires libssh https://www.libssh.org on your system" {failure}
+]
