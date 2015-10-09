@@ -24,10 +24,12 @@ struct result { int status; char *output; };
 
 void clean_up_ssh_memory (value a_session)
 {
+  CAMLparam1(a_session);
   printf("Finished\n");
   /* ssh_session sess = (ssh_session)a_session; */
   /* ssh_disconnect(sess); */
   /* ssh_free(sess); */
+  CAMLnoreturn;
 }
 
 static struct custom_operations ssh_custom_ops = {
@@ -58,11 +60,7 @@ CAMLprim value libssh_ml_ssh_init(void)
   // as just 0, 1
   ssh_ml_handle = caml_alloc_custom(&ssh_custom_ops, sizeof(&this_sess), 0, 1);
   memcpy(Data_custom_val(ssh_ml_handle), this_sess, sizeof(&this_sess));
-  /* ssh_free(this_sess); */
-  /* ssh_ml_handle = (value)Data_custom_val(this_sess); */
-  /* CAMLreturn((value)Data_custom_val(ssh_ml_handle)); */
   CAMLreturn(ssh_ml_handle);
-  /* CAMLreturn((value)this_sess); */
 }
 
 
