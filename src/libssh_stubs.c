@@ -148,6 +148,7 @@ CAMLprim value libssh_ml_ssh_exec(value command_val, value sess_val)
   len = caml_string_length(command_val);
   command = caml_strdup(String_val(command_val));
   if (strlen(command) != len) {
+    caml_stat_free(command);
     caml_failwith("Problem copying string from OCaml to C");
   }
   this_sess = (ssh_session)Data_custom_val(sess_val);
