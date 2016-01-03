@@ -29,6 +29,7 @@ void clean_up_ssh_memory (value a_session)
   /* ssh_session sess = (ssh_session)a_session; */
   /* ssh_disconnect(sess); */
   /* ssh_free(sess); */
+  // Max: Is this a leak of ssh_session?
   CAMLnoreturn;
 }
 
@@ -147,6 +148,7 @@ CAMLprim value libssh_ml_ssh_exec(value command_val, value sess_val)
   len = caml_string_length(command_val);
   command = caml_strdup(String_val(command_val));
   if (strlen(command) != len) {
+    caml_stat_free(command);
     caml_failwith("Problem copying string from OCaml to C");
   }
   this_sess = (ssh_session)Data_custom_val(sess_val);
@@ -178,6 +180,7 @@ CAMLprim value libssh_ml_ssh_connect(value opts, value sess_val)
   hostname = caml_strdup(String_val(hostname_val));
 
   if (strlen(hostname) != len) {
+    caml_stat_free(hostname);
     caml_failwith("Problem copying string from OCaml to C");
   } else len = 0;
 
@@ -185,6 +188,8 @@ CAMLprim value libssh_ml_ssh_connect(value opts, value sess_val)
   len = caml_string_length(username_val);
 
   if (strlen(username) != len) {
+    caml_stat_free(hostname);
+    caml_stat_free(username);
     caml_failwith("Problem copying string from OCaml to C");
   } else len = 0;
 
@@ -230,12 +235,14 @@ CAMLprim value libssh_ml_remote_shell(value produce, value consume, value sess_v
   size_t len = caml_string_length(exec_this);
   char *copied = caml_strdup(String_val(exec_this));
   if (strlen(copied) != len) {
+    caml_stat_free(copied);
     caml_failwith("Problem copying string from OCaml to C");
   }
 
   struct result r = exec_remote_command(copied, this_sess);
 
   caml_callback(consume, caml_copy_string(r.output));
+  caml_stat_free(r.output);
   free(copied);
   CAMLreturn(Val_unit);
 }
@@ -268,13 +275,17 @@ CAMLprim value libssh_ml_ssh_scp(value src_path,
   s_path = caml_strdup(String_val(src_path));
 
   if (strlen(s_path) != len) {
+    caml_stat_free(s_path);
     caml_failwith("Problem copying string from OCaml to C");
   } else len = 0;
 
+  // Max: what is this string for? is it dead code?
   len = caml_string_length(dest_path);
   d_path = caml_strdup(String_val(dest_path));
 
   if (strlen(d_path) != len) {
+    caml_stat_free(s_path);
+    caml_stat_free(d_path);
     caml_failwith("Problem copying string from OCaml to C");
   } else len = 0;
 
@@ -282,6 +293,9 @@ CAMLprim value libssh_ml_ssh_scp(value src_path,
   ssh_scp this_scp = prepare(this_sess);
   struct stat file_info;
   if (stat(s_path, &file_info) != 0) {
+    caml_stat_free(s_path);
+    caml_stat_free(d_path);
+    // Max: should this_scp also be released/finalized here?
     caml_failwith("Cannot get needed file information for scp");
   }
 
@@ -289,5 +303,10 @@ CAMLprim value libssh_ml_ssh_scp(value src_path,
 				  s_path,
 				  file_info.st_size,
 				  666);
+
+  caml_stat_free(s_path);
+  caml_stat_free(d_path);
+  // Max: should this_scp also be released/finalized here?
+
   CAMLreturn(Val_unit);
 }
