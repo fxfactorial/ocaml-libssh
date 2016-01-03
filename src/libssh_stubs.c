@@ -153,7 +153,7 @@ CAMLprim value libssh_ml_ssh_exec(value command_val, value sess_val)
 
   struct result this_result = exec_remote_command(command, this_sess);
   output_val = caml_copy_string(this_result.output);
-  free(this_result.output);
+  caml_stat_free(this_result.output);
   CAMLreturn(output_val);
 }
 
@@ -203,8 +203,8 @@ CAMLprim value libssh_ml_ssh_connect(value opts, value sess_val)
 
   check_result(ssh_connect(this_sess), this_sess);
   verify_server(this_sess);
-  free(hostname);
-  free(username);
+  caml_stat_free(hostname);
+  caml_stat_free(username);
   switch (auth) {
   case 0:
     check_result(ssh_userauth_publickey_auto(this_sess, NULL, NULL), this_sess);
@@ -236,7 +236,7 @@ CAMLprim value libssh_ml_remote_shell(value produce, value consume, value sess_v
   struct result r = exec_remote_command(copied, this_sess);
 
   caml_callback(consume, caml_copy_string(r.output));
-  free(copied);
+  caml_stat_free(copied);
   CAMLreturn(Val_unit);
 }
 
